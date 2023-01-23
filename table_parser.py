@@ -1,9 +1,7 @@
+from statistics import median_high
 from typing import Optional
 
-from statistics import median_high
-
 from PyPDF2 import PdfReader
-from PyPDF2.generic import RectangleObject
 
 Elements = dict[float, dict[float, str]]
 
@@ -55,6 +53,7 @@ def create_visitor(elements: Elements, page_offset: int):
         if not elements.get(y):
             elements[y] = {}
         elements[y][x] = text
+
     return visitor
 
 
