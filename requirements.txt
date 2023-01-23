@@ -1,3 +1,5 @@
-python-telegram-bot[ext]
+python-telegram-bot[ext,job-queue]
 PyPDF2
 requests
+python-dotenv
+beautifulsoup4

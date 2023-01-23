@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import io
 import re
 from pathlib import Path
 from typing import Optional
@@ -61,6 +62,12 @@ class PDF:
     def from_file(file: Path) -> PDF:
         reader: PdfReader = PdfReader(file)
         return PDF(reader)
+
+    @staticmethod
+    def from_bytes(content: bytes) -> PDF:
+        with io.BytesIO(content) as pdf_file:
+            reader: PdfReader = PdfReader(pdf_file)
+            return PDF(reader)
 
 
 if __name__ == '__main__':
