@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import datetime
 import re
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 from PyPDF2 import PdfReader
 
+from Substitution import Substitution
 from table_parser import parse_tables, Table
-
 
 DOT_REGEX: re.Pattern = re.compile(r'\.+$')
 
@@ -17,8 +18,6 @@ class PDF:
         self.reader: PdfReader = reader
         self.tables: list[Table] = parse_tables(reader)
         self.__cleanup_tables()
-        for table in self.tables:
-            print(str(table))
 
     @staticmethod
     def __remove_dots_from_row(row: list[Optional[str]]):
@@ -39,6 +38,24 @@ class PDF:
                 else:
                     row[0] = last_date
                     row[1] = last_day
+
+    def to_substitutions(self) -> list[Substitution]:
+        substitutions: list[Substitution] = []
+        for table in self.tables:
+            for row in table.rows:
+                date: datetime.datetime = datetime.datetime.strptime(row[0], '%d.%m.%Y')
+                substitutions.append(
+                    Substitution(
+                        row[6],
+                        round(date.timestamp()),
+                        int(row[2]),
+                        row[3],
+                        row[4],
+                        row[5],
+                        row[7],
+                    )
+                )
+        return substitutions
 
     @staticmethod
     def from_file(file: Path) -> PDF:
