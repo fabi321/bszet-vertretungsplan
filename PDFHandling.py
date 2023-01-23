@@ -40,7 +40,6 @@ class PDF:
                     row[0] = last_date
                     row[1] = last_day
 
-
     @staticmethod
     def from_file(file: Path) -> PDF:
         reader: PdfReader = PdfReader(file)
