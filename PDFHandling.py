@@ -1,35 +1,51 @@
 from __future__ import annotations
 
 import re
+from typing import Optional
 from pathlib import Path
 
 from PyPDF2 import PdfReader
 
+from table_parser import parse_tables, Table
 
-CELL_REGEX: str = r'([^.]+)\.{3}\s*'
-DATE_REGEX: str = r'[0-9]{2}\.[0-9]{2}\.[0-9]{4}'
-LINE_REGEX: re.Pattern = re.compile(fr'{CELL_REGEX*7}\.?[0-9]*\.*\s*(?:([a-zA-Z]+)\.{{3}}\s*({DATE_REGEX})\.{{3}})?')
+
+DOT_REGEX: re.Pattern = re.compile(r'\.+$')
 
 
 class PDF:
-    def __init__(self, pdf_string: str):
-        self.pdf_string: str = pdf_string
+    def __init__(self, reader: PdfReader):
+        self.reader: PdfReader = reader
+        self.tables: list[Table] = parse_tables(reader)
+        self.__cleanup_tables()
+        for table in self.tables:
+            print(str(table))
 
-    def parse_string_content(self):
-        for line in reversed(LINE_REGEX.findall(self.pdf_string)):
-            print(line)
+    @staticmethod
+    def __remove_dots_from_row(row: list[Optional[str]]):
+        for i, cell in enumerate(row):
+            if cell:
+                row[i] = DOT_REGEX.sub('', cell)
+
+    def __cleanup_tables(self):
+        for table in self.tables:
+            PDF.__remove_dots_from_row(table.head)
+            last_date: str = ''
+            last_day: str = ''
+            for row in table.rows:
+                PDF.__remove_dots_from_row(row)
+                if row[0]:
+                    last_date = row[0]
+                    last_day = row[1]
+                else:
+                    row[0] = last_date
+                    row[1] = last_day
+
 
     @staticmethod
     def from_file(file: Path) -> PDF:
         reader: PdfReader = PdfReader(file)
-        pdf_string: str = '\n'.join(page.extract_text() for page in reader.pages)
-        return PDF(pdf_string)
+        return PDF(reader)
 
 
 if __name__ == '__main__':
-    pdf = PDF('''
-Dammmüller... Aufgaben Herr Ränsch... C_IT 20/3... A302... IT-LF11b... +Dammmüller (Ränsch)... 6....6....Dammmüller... Aufgaben Herr Ränsch... C_IT 20/3... A302... IT-LF11b... +Dammmüller (Ränsch)... 5....5.... Di... 24.01.2023...VLehrer Kürzel... Mitteilung... Klasse... Raum... Fach... Lehrer... Pos... Tag... Datum...Mo 23.01.2023 bis Di 24.01.2023C_IT 20/3
-Wittkopf... Aufgaben Herr Poppe... C_MI 21/3... B411... FBP-FE... +Wittkopf (Poppe)... 6....6....Wittkopf... Aufgaben Herr Poppe... C_MI 21/3... B411... FBP-FE... +Wittkopf (Poppe)... 5....5....Wittkopf... statt 1./2. Stunde... C_MI 21/3... B411... FBP-FE... +Wittkopf (Poppe)... 4....4....Wittkopf... statt 1./2. Stunde... C_MI 21/3... B411... FBP-FE... +Wittkopf (Poppe)... 3....3.... fällt aus... C_MI 21/3... B406... FP-FV... (Wittkopf)... 2....2.... fällt aus... C_MI 21/3... B406... FP-FV... (Wittkopf)... 1....1.... Mo... 23.01.2023...VLehrer Kürzel... Mitteilung... Klasse... Raum... Fach... Lehrer... Pos... Tag... Datum...Mo 23.01.2023 bis Di 24.01.2023C_MI 21/3
- Aufgaben über LernSax... C_MI 22/3... B9, B404... FP-CHE... (Kunitzsch)... 8....8.... Aufgaben über LernSax... C_MI 22/3... B9, B404... FP-CHE... (Kunitzsch)... 7....7.... fällt aus... C_MI 22/3... B405... FP-RR... (Wollmann)... 2....2.... fällt aus... C_MI 22/3... B405... FP-RR... (Wollmann)... 1....1.... Mo... 23.01.2023...VLehrer Kürzel... Mitteilung... Klasse... Raum... Fach... Lehrer... Pos... Tag... Datum...Mo 23.01.2023 bis Di 24.01.2023C_MI 22/3'''
-              )
-    pdf.parse_string_content()
+    pdf = PDF.from_file(Path('vertretungsplan-bs-it.pdf'))
