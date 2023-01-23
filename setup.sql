@@ -10,18 +10,20 @@ create table group (
     gid text primary key
 )
 
-create table user_group (
-    gid text references group not null,
-    uid int references user not null,
-    primary key (gid, uid)
-)
-
 create table user (
-    uid int primary key
+    uid int primary key,
+    gid text references group on delete cascade,
+    trusted int not null default 0
 )
 
 create table substitution (
     sid int primary key,
-    gid text references group not null
-    
+    gid text not null references group on delete cascade
+    day int not null,
+    lesson int not null,
+    teacher text not null,
+    subject text not null,
+    room text not null,
+    notes text,
+    unique (day, lesson, gid)
 )
