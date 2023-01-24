@@ -72,6 +72,13 @@ class DB:
         except sqlite3.Error as e:
             print(f'Error while trying to clear user class: {e}')
 
+    def get_all_substitutions_for_user(self, uid: int) -> list[Substitution]:
+        cur: sqlite3.Cursor = self.conn.execute(
+            'select gid, day, lesson, teacher, subject, room, notes, u.last_updated < s.last_updated from user u join substitution s using (gid) where uid = ? and day > current_timestamp - 86400',
+            (uid,)
+            )
+        return [Substitution(*row) for row in cur.fetchall()]
+
     def __check_if_substitution_exists(self, s: Substitution) -> Optional[int]:
         cur: sqlite3.Cursor = self.conn.execute(
             'select sid from substitution where day = ? and lesson = ? and gid = ?',

@@ -46,7 +46,7 @@ def do_update(context: CustomContext) -> list[str]:
 
 def message_users(context: CallbackContext, updated: list[str]) -> None:
     for gid in updated:
-        ...
+        print(context.job.data.db.get_all_substitutions_for_user(494351437))
 
 
 async def update(context: CallbackContext):
