@@ -1,9 +1,8 @@
-import io
 from datetime import datetime
 
+import requests
 from bs4 import BeautifulSoup
 from telegram.ext import CallbackContext
-import requests
 
 from DB import DB
 from PDFHandling import PDF
@@ -31,7 +30,9 @@ def is_updated(context: CustomContext) -> bool:
 def do_update(context: CustomContext) -> list[str]:
     updated_groups: set[str] = set()
     auth: tuple[str, str] = context.db.get_latest_credential()
-    resp: requests.Response = requests.get('https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/vertretungsplan-bs-it.pdf', auth=auth)
+    resp: requests.Response = requests.get(
+        'https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/vertretungsplan-bs-it.pdf', auth=auth
+        )
     if resp.status_code != 200:
         print(f'Error fetching document, {resp.text}')
         return []
@@ -51,4 +52,3 @@ def message_users(context: CallbackContext, updated: list[str]) -> None:
 async def update(context: CallbackContext):
     if is_updated(context.job.data):
         updated: list[str] = do_update(context.job.data)
-

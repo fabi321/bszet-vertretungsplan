@@ -1,7 +1,6 @@
 import sqlite3
 from pathlib import Path
 from typing import Optional
-from time import time
 
 from Substitution import Substitution
 
@@ -108,7 +107,7 @@ class DB:
                 transaction.execute(
                     'insert into substitution (gid, day, lesson, teacher, subject, room, notes) values (?, ?, ?, ?, ?, ?, ?)',
                     (s.group, s.day, s.lesson, s.teacher, s.subject, s.room, s.notes)
-                    )
+                )
         except sqlite3.Error as e:
             print(f'Error while trying to create substitution: {e}')
 

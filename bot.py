@@ -1,13 +1,13 @@
-from pathlib import Path
 from os import getenv
+from pathlib import Path
 
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes
 
-from DB import DB
 import check_credentials
 import update_substitutions
+from DB import DB
 
 global db
 
@@ -32,7 +32,9 @@ async def setclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text('Please specify a class like "/setclass C_MI 21/3".')
         return
     if text not in db.get_all_recent_classes():
-        await update.message.reply_text(f'The class {text} is not known. If you believe that this is an error, check back later.')
+        await update.message.reply_text(
+            f'The class {text} is not known. If you believe that this is an error, check back later.'
+            )
         return
     db.add_user_to_class(update.effective_user.id, text)
     await update.message.reply_text(f'You have successfully selected the class "{text}".')
