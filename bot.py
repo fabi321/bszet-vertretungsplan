@@ -70,7 +70,7 @@ def main() -> None:
     app.add_handler(verify_flow.get_handler())
     app.add_handler(set_class_flow.get_handler())
     app.add_handler(stop_flow.get_handler())
-    app.add_handler(CommandHandler('removeclass', removeclass))
+    app.add_handler(CommandHandler('clear_class', removeclass))
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
     app.add_error_handler(error_handler)
     updater_context: update_substitutions.CustomContext = update_substitutions.CustomContext()
