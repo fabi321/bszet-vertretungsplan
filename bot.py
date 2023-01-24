@@ -12,6 +12,7 @@ from telegram.ext import Application, ApplicationBuilder, CommandHandler, Contex
 
 import update_substitutions
 import set_class_flow
+import stop_flow
 import verify_flow
 from DB import DB
 
@@ -68,6 +69,7 @@ def main() -> None:
     app.add_handler(CommandHandler('start', start))
     app.add_handler(verify_flow.get_handler())
     app.add_handler(set_class_flow.get_handler())
+    app.add_handler(stop_flow.get_handler())
     app.add_handler(CommandHandler('removeclass', removeclass))
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
     app.add_error_handler(error_handler)

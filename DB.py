@@ -57,6 +57,11 @@ class DB:
         return bool(cur.fetchone())
 
     @classmethod
+    def delete_user(cls, user_id: int) -> None:
+        with cls.conn as transaction:
+            transaction.execute('delete from user where uid = ?', (user_id,))
+
+    @classmethod
     def get_areas(cls) -> list[str]:
         cur: sqlite3.Cursor = cls.conn.execute('select distinct area from class')
         return [i[0] for i in cur.fetchall()]
