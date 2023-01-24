@@ -95,7 +95,7 @@ class DB:
     @classmethod
     def __add_class_if_not_exists(cls, gid: str) -> None:
         with cls.conn as transaction:
-            transaction.execute('insert into class values (?) on conflict do nothing', (gid,))
+            transaction.execute('insert into class (gid) values (?) on conflict do nothing', (gid,))
 
     @classmethod
     def insert_or_modify_substitution(cls, s: Substitution) -> bool:
