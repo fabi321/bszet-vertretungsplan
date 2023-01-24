@@ -72,7 +72,9 @@ class DB:
     @classmethod
     def get_all_substitutions_for_user(cls, uid: int) -> list[Substitution]:
         cur: sqlite3.Cursor = cls.conn.execute(
-            "select gid, day, lesson, teacher, subject, room, notes, u.last_update < s.last_update from user u join substitution s using (gid) where uid = ? and day > strftime('%s', 'now') - 86200 order by day, lesson asc",
+            "select gid, day, lesson, teacher, subject, room, notes, u.last_update < s.last_update from user u"
+            " join substitution s using (gid) where uid = ? and day > strftime('%s', 'now') - 86200"
+            " order by day, lesson asc",
             (uid,)
         )
         return [Substitution(*row) for row in cur.fetchall()]
