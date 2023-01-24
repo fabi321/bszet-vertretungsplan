@@ -47,7 +47,7 @@ def do_update(context: CustomContext) -> list[str]:
 
 
 async def update_user(uid: int, bot: Bot) -> None:
-    result: str = 'Current substitutions:\n\n'
+    result: str = 'Aktuelle Vertretungen:\n\n'
     is_new: bool = False
     for substitution in DB.get_all_substitutions_for_user(uid):
         line: str = datetime.fromtimestamp(substitution.day).strftime('%a, %d.%m')
