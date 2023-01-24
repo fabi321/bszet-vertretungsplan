@@ -74,7 +74,7 @@ class DB:
 
     def get_all_substitutions_for_user(self, uid: int) -> list[Substitution]:
         cur: sqlite3.Cursor = self.conn.execute(
-            'select gid, day, lesson, teacher, subject, room, notes, u.last_update < s.last_update from user u join substitution s using (gid) where uid = ? and day > current_timestamp - 86400',
+            "select gid, day, lesson, teacher, subject, room, notes, u.last_update < s.last_update from user u join substitution s using (gid) where uid = ? and day > strftime('%s', 'now') - 86200",
             (uid,)
             )
         return [Substitution(*row) for row in cur.fetchall()]
