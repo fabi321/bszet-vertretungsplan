@@ -69,7 +69,7 @@ def main() -> None:
     app.add_handler(CommandHandler('removeclass', removeclass))
     app.add_handler(CommandHandler('listclasses', listclasses))
     updater_context: update_substitutions.CustomContext = update_substitutions.CustomContext(db)
-    app.job_queue.run_repeating(update_substitutions.update, 10, data=updater_context)
+    app.job_queue.run_repeating(update_substitutions.update, 5*60, data=updater_context)
     app.run_polling()
 
 
