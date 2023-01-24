@@ -52,12 +52,12 @@ async def update_user(uid: int, db: DB, bot: Bot) -> None:
     is_new: bool = False
     for substitution in db.get_all_substitutions_for_user(uid):
         line: str = datetime.fromtimestamp(substitution.day).strftime('%a, %d.%m')
-        line += f': {substitution.teacher}, {substitution.lesson}. {substitution.subject} {substitution.room}'
+        line += f', {substitution.lesson}: {substitution.teacher} {substitution.subject} {substitution.room}'
         if substitution.notes:
             line += f' ({substitution.notes})'
         line = escape_markdown(line, version=2)
         if substitution.is_new:
-            line = f'**{line}**'
+            line = f'*{line}*'
             is_new = True
         result += line + '\n'
     if is_new:
