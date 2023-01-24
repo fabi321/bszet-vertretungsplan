@@ -12,13 +12,12 @@ from PDFHandling import PDF
 
 
 class CustomContext:
-    def __init__(self, db: DB) -> None:
+    def __init__(self) -> None:
         self.last_updated: datetime = datetime.min
-        self.db: DB = db
 
 
 def is_updated(context: CustomContext) -> bool:
-    auth: tuple[str, str] = context.db.get_latest_credential()
+    auth: tuple[str, str] = DB.get_latest_credential()
     resp: requests.Response = requests.get('https://geschuetzt.bszet.de/index.php?dir=/Vertretungsplaene', auth=auth)
     if resp.status_code != 200:
         print(f'Error fetching status, {resp.text}')
@@ -32,7 +31,7 @@ def is_updated(context: CustomContext) -> bool:
 
 def do_update(context: CustomContext) -> list[str]:
     updated_groups: set[str] = set()
-    auth: tuple[str, str] = context.db.get_latest_credential()
+    auth: tuple[str, str] = DB.get_latest_credential()
     resp: requests.Response = requests.get(
         'https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/vertretungsplan-bs-it.pdf', auth=auth
     )
@@ -41,16 +40,16 @@ def do_update(context: CustomContext) -> list[str]:
         return []
     pdf: PDF = PDF.from_bytes(resp.content)
     for substitution in pdf.to_substitutions():
-        if context.db.insert_or_modify_substitution(substitution):
+        if DB.insert_or_modify_substitution(substitution):
             updated_groups.add(substitution.group)
     context.last_updated = datetime.now()
     return list(updated_groups)
 
 
-async def update_user(uid: int, db: DB, bot: Bot) -> None:
+async def update_user(uid: int, bot: Bot) -> None:
     result: str = 'Current substitutions:\n\n'
     is_new: bool = False
-    for substitution in db.get_all_substitutions_for_user(uid):
+    for substitution in DB.get_all_substitutions_for_user(uid):
         line: str = datetime.fromtimestamp(substitution.day).strftime('%a, %d.%m')
         line += f', {substitution.lesson}: {substitution.teacher} {substitution.subject} {substitution.room}'
         if substitution.notes:
@@ -61,15 +60,15 @@ async def update_user(uid: int, db: DB, bot: Bot) -> None:
             is_new = True
         result += line + '\n'
     if is_new:
-        db.update_user(uid)
+        DB.update_user(uid)
         await bot.send_message(chat_id=uid, text=result, parse_mode=ParseMode.MARKDOWN_V2)
 
 
 async def message_users(context: CallbackContext, updated: list[str]) -> None:
     for gid in updated:
-        users: list[int] = context.job.data.db.get_all_users_in_class(gid)
+        users: list[int] = DB.get_all_users_in_class(gid)
         for uid in users:
-            await update_user(uid, context.job.data.db, context.bot)
+            await update_user(uid, context.bot)
 
 
 async def update(context: CallbackContext):

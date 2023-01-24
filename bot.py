@@ -14,7 +14,6 @@ import check_credentials
 import update_substitutions
 from DB import DB
 
-global db
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -30,46 +29,46 @@ async def verify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     is_valid: bool = check_credentials.check(parts[0], parts[1])
     if not is_valid:
         await update.message.reply_text('Please use the following format: "username" "password".')
-    db.add_credentials_if_new(parts[0], parts[1])
-    db.trust_user(update.effective_user.id)
+    DB.add_credentials_if_new(parts[0], parts[1])
+    DB.trust_user(update.effective_user.id)
     await update.message.reply_text('You have been successfully verified. Feel free to use /setclass now.')
 
 
 async def setclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not db.is_trusted_user(update.effective_user.id):
+    if not DB.is_trusted_user(update.effective_user.id):
         await update.message.reply_text('You need to be verified in order to use this command')
         return
     text: str = update.message.text.replace('/setclass', '').strip()
     if not text or len(text) >= 15:
         await update.message.reply_text('Please specify a class like "/setclass C_MI 21/3".')
         return
-    if text not in db.get_all_recent_classes():
+    if text not in DB.get_all_recent_classes():
         await update.message.reply_text(
             f'The class {text} is not known. If you believe that this is an error, check back later.'
         )
         return
-    db.add_user_to_class(update.effective_user.id, text)
-    db.update_user(update.effective_user.id, True)
+    DB.add_user_to_class(update.effective_user.id, text)
+    DB.update_user(update.effective_user.id, True)
     await update.message.reply_text(f'You have successfully selected the class "{text}".')
-    await update_substitutions.update_user(update.effective_user.id, db, context.bot)
+    await update_substitutions.update_user(update.effective_user.id, context.bot)
 
 
 async def removeclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    db.clear_user_class(update.effective_user.id)
+    DB.clear_user_class(update.effective_user.id)
     await update.message.reply_text(f'You have successfully removed your previous class.')
 
 
 async def listclasses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not db.is_trusted_user(update.effective_user.id):
+    if not DB.is_trusted_user(update.effective_user.id):
         await update.message.reply_text('You need to be verified in order to use this command')
         return
     response: str = 'All known classes:\n'
-    response += '\n'.join(db.get_all_recent_classes())
+    response += '\n'.join(DB.get_all_recent_classes())
     await update.message.reply_text(response)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    db.add_user(update.effective_user.id)
+    DB.add_user(update.effective_user.id)
     await update.message.reply_text('To start using this bot, please verify that you know the login using /verify.')
 
 
@@ -106,10 +105,9 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 def main() -> None:
-    global db
     load_dotenv()
     app: Application = ApplicationBuilder().token(getenv('BOT_API_TOKEN')).build()
-    db = DB(Path(getenv('DATABASE_FILE')))
+    DB.init_db(Path(getenv('DATABASE_FILE')))
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CommandHandler('verify', verify))
     app.add_handler(CommandHandler('setclass', setclass))
@@ -117,7 +115,7 @@ def main() -> None:
     app.add_handler(CommandHandler('listclasses', listclasses))
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
     app.add_error_handler(error_handler)
-    updater_context: update_substitutions.CustomContext = update_substitutions.CustomContext(db)
+    updater_context: update_substitutions.CustomContext = update_substitutions.CustomContext()
     app.job_queue.run_repeating(update_substitutions.update, 5 * 60, data=updater_context)
     app.run_polling()
 
