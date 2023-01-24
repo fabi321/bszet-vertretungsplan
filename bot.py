@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 import check_credentials
 import update_substitutions
@@ -64,6 +64,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('To start using this bot, please verify that you know the login using /verify.')
 
 
+async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Sorry, I didn't understand that command.")
+
+
 def main() -> None:
     global db
     load_dotenv()
@@ -74,6 +78,7 @@ def main() -> None:
     app.add_handler(CommandHandler('setclass', setclass))
     app.add_handler(CommandHandler('removeclass', removeclass))
     app.add_handler(CommandHandler('listclasses', listclasses))
+    app.add_handler(MessageHandler(filters.COMMAND, unknown))
     updater_context: update_substitutions.CustomContext = update_substitutions.CustomContext(db)
     app.job_queue.run_repeating(update_substitutions.update, 5*60, data=updater_context)
     app.run_polling()
