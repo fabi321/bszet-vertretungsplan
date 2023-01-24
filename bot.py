@@ -67,7 +67,7 @@ def main() -> None:
     DB.init_db(Path(getenv('DATABASE_FILE')))
     app.add_handler(CommandHandler('start', start))
     app.add_handler(verify_flow.get_handler())
-    app.add_handler(set_class_flow.get_conversation_handler())
+    app.add_handler(set_class_flow.get_handler())
     app.add_handler(CommandHandler('removeclass', removeclass))
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
     app.add_error_handler(error_handler)

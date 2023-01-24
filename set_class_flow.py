@@ -62,7 +62,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-def get_conversation_handler() -> ConversationHandler:
+def get_handler() -> ConversationHandler:
     return ConversationHandler(
         entry_points=[CommandHandler('set_class', set_class)],
         states={
