@@ -143,7 +143,7 @@ class DB:
 
     def insert_or_modify_substitution(self, substitution: Substitution) -> bool:
         self.__add_class_if_not_exists(substitution.group)
-        if sid := self.__check_if_substitution_exists(substitution) is not None:
+        if (sid := self.__check_if_substitution_exists(substitution)) is not None:
             if self.__check_substitution_difference(substitution, sid):
                 self.__update_substitution(substitution, sid)
             else:
