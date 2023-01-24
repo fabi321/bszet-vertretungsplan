@@ -16,7 +16,7 @@ async def verify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text: str = update.message.text.replace('/verify ', '').replace(',', ' ')
     parts: list[str] = text.split()
     if len(parts) != 2:
-        await update.message.reply_text('Please specify the current login for geschuetzt.bszet.de, separated by space.')
+        await update.message.reply_text('Please specify the current login for geschuetzt.bszet.de, separated by space. E.g. /verify username password ')
         return
     is_valid: bool = check_credentials.check(parts[0], parts[1])
     if not is_valid:
