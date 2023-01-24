@@ -14,7 +14,7 @@ create table if not exists user (
     uid int primary key,
     gid text references class on delete cascade,
     trusted int not null default 0,
-    last_update int not null default current_timestamp
+    last_update int not null default strftime('%s', 'now')
 );
 
 create table if not exists substitution (
@@ -26,6 +26,6 @@ create table if not exists substitution (
     subject text not null,
     room text not null,
     notes text,
-    last_update int not null default current_timestamp,
+    last_update int not null default strftime('%s', 'now'),
     unique (day, lesson, gid)
 );

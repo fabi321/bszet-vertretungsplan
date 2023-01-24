@@ -102,7 +102,7 @@ class DB:
         try:
             with self.conn as transaction:
                 transaction.execute(
-                    'update substitution set teacher = ?, subject = ?, room = ?, notes = ?, last_update = current_timestamp where sid = ?',
+                    "update substitution set teacher = ?, subject = ?, room = ?, notes = ?, last_update = strftime('%s', 'now') where sid = ?",
                     (s.teacher, s.subject, s.room, s.notes, sid)
                 )
         except sqlite3.Error as e:
