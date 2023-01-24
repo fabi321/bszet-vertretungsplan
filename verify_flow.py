@@ -31,7 +31,7 @@ async def entered_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     del context.user_data['username']
     is_valid: bool = check_credentials(username, password)
     if is_valid:
-        DB.add_credentials_if_new(username, password)
+        DB.add_new_credential(username, password)
         DB.trust_user(update.effective_user.id)
         await update.message.reply_text(
             'Du wurdest erfolgreich verifiziert. Die Klasse kannst du mit /set_class setzen'

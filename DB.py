@@ -26,14 +26,7 @@ class DB:
     def add_new_credential(cls, username: str, password: str) -> None:
         with cls.conn as transaction:
             yid: int = password_to_credentials_id(password)
-            transaction.execute('insert into credentials values (?, ?, ?)', (yid, username, password))
-
-    @classmethod
-    def add_credentials_if_new(cls, username: str, password: str) -> None:
-        yid = password_to_credentials_id(password)
-        cur: sqlite3.Cursor = cls.conn.execute('select 1 from credentials where yid = ?', (yid,))
-        if not cur.fetchone():
-            cls.add_new_credential(username, password)
+            transaction.execute('insert into credentials values (?, ?, ?) on conflict do nothing', (yid, username, password))
 
     @classmethod
     def add_user(cls, user_id: int) -> None:
