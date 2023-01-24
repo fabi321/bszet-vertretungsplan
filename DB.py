@@ -26,7 +26,9 @@ class DB:
     def add_new_credential(cls, username: str, password: str) -> None:
         with cls.conn as transaction:
             yid: int = password_to_credentials_id(password)
-            transaction.execute('insert into credentials values (?, ?, ?) on conflict do nothing', (yid, username, password))
+            transaction.execute(
+                'insert into credentials values (?, ?, ?) on conflict do nothing', (yid, username, password)
+                )
 
     @classmethod
     def add_user(cls, user_id: int) -> None:
@@ -92,11 +94,8 @@ class DB:
 
     @classmethod
     def __add_class_if_not_exists(cls, gid: str) -> None:
-        cur: sqlite3.Cursor = cls.conn.execute('select 1 from class where gid = ?', (gid,))
-        if cur.fetchone():
-            return
         with cls.conn as transaction:
-            transaction.execute('insert or ignore into class values (?)', (gid,))
+            transaction.execute('insert into class values (?) on conflict do nothing', (gid,))
 
     @classmethod
     def insert_or_modify_substitution(cls, s: Substitution) -> bool:
