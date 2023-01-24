@@ -34,10 +34,12 @@ async def setclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if text not in db.get_all_recent_classes():
         await update.message.reply_text(
             f'The class {text} is not known. If you believe that this is an error, check back later.'
-            )
+        )
         return
     db.add_user_to_class(update.effective_user.id, text)
+    db.update_user(update.effective_user.id, True)
     await update.message.reply_text(f'You have successfully selected the class "{text}".')
+    await update_substitutions.update_user(update.effective_user.id, db, context.bot)
 
 
 async def removeclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

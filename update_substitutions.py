@@ -2,7 +2,10 @@ from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
+from telegram import Bot
+from telegram.constants import ParseMode
 from telegram.ext import CallbackContext
+from telegram.helpers import escape_markdown
 
 from DB import DB
 from PDFHandling import PDF
@@ -32,7 +35,7 @@ def do_update(context: CustomContext) -> list[str]:
     auth: tuple[str, str] = context.db.get_latest_credential()
     resp: requests.Response = requests.get(
         'https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/vertretungsplan-bs-it.pdf', auth=auth
-        )
+    )
     if resp.status_code != 200:
         print(f'Error fetching document, {resp.text}')
         return []
@@ -44,11 +47,32 @@ def do_update(context: CustomContext) -> list[str]:
     return list(updated_groups)
 
 
-def message_users(context: CallbackContext, updated: list[str]) -> None:
+async def update_user(uid: int, db: DB, bot: Bot) -> None:
+    result: str = 'Current substitutions:\n\n'
+    is_new: bool = False
+    for substitution in db.get_all_substitutions_for_user(uid):
+        line: str = datetime.fromtimestamp(substitution.day).strftime('%a, %d.%m')
+        line += f': {substitution.teacher} {substitution.subject} {substitution.room}'
+        if substitution.notes:
+            line += f' ({substitution.notes})'
+        line = escape_markdown(line, version=2)
+        if substitution.is_new:
+            line = f'**{line}**'
+            is_new = True
+        result += line + '\n'
+    if is_new:
+        db.update_user(uid)
+        await bot.send_message(chat_id=uid, text=result, parse_mode=ParseMode.MARKDOWN_V2)
+
+
+async def message_users(context: CallbackContext, updated: list[str]) -> None:
     for gid in updated:
-        print(context.job.data.db.get_all_substitutions_for_user(494351437))
+        users: list[int] = context.job.data.db.get_all_users_in_class(gid)
+        for uid in users:
+            await update_user(uid, context.job.data.db, context.bot)
 
 
 async def update(context: CallbackContext):
     if is_updated(context.job.data):
         updated: list[str] = do_update(context.job.data)
+        await message_users(context, updated)

@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -74,10 +75,22 @@ class DB:
 
     def get_all_substitutions_for_user(self, uid: int) -> list[Substitution]:
         cur: sqlite3.Cursor = self.conn.execute(
-            "select gid, day, lesson, teacher, subject, room, notes, u.last_update < s.last_update from user u join substitution s using (gid) where uid = ? and day > strftime('%s', 'now') - 86200",
+            "select gid, day, lesson, teacher, subject, room, notes, u.last_update < s.last_update from user u join substitution s using (gid) where uid = ? and day > strftime('%s', 'now') - 86200 order by day, lesson asc",
             (uid,)
-            )
+        )
         return [Substitution(*row) for row in cur.fetchall()]
+
+    def update_user(self, user_id: int, is_zero: bool = False) -> None:
+        try:
+            with self.conn as transaction:
+                target: int = 0 if is_zero else time.time()
+                transaction.execute("update user set last_update = ? where uid = ?", (target, user_id))
+        except sqlite3.Error as e:
+            print(f'Error while trying update user: {e}')
+
+    def get_all_users_in_class(self, gid: str) -> list[int]:
+        cur: sqlite3.Cursor = self.conn.execute('select uid from user where gid = ?', (gid,))
+        return [i[0] for i in cur.fetchall()]
 
     def __check_if_substitution_exists(self, s: Substitution) -> Optional[int]:
         cur: sqlite3.Cursor = self.conn.execute(
@@ -92,10 +105,10 @@ class DB:
         cur: sqlite3.Cursor = self.conn.execute('select * from substitution where sid = ?', (sid,))
         res = cur.fetchone()
         return (
-            res[4] != s.teacher
-            or res[5] != s.subject
-            or res[6] != s.room
-            or res[7] != s.notes
+                res[4] != s.teacher
+                or res[5] != s.subject
+                or res[6] != s.room
+                or res[7] != s.notes
         )
 
     def __update_substitution(self, s: Substitution, sid: int) -> None:

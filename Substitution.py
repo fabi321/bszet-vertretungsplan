@@ -3,8 +3,8 @@ from typing import Optional
 
 class Substitution:
     def __init__(
-        self, group: str, day: int, lesson: int, teacher: str, subject: str, room: str, notes: Optional[str],
-        is_new: bool
+            self, group: str, day: int, lesson: int, teacher: str, subject: str, room: str, notes: Optional[str],
+            is_new: bool
     ) -> None:
         self.group: str = group
         self.day: int = day
