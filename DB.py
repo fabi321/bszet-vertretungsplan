@@ -28,7 +28,7 @@ class DB:
             yid: int = password_to_credentials_id(password)
             transaction.execute(
                 'insert into credentials values (?, ?, ?) on conflict do nothing', (yid, username, password)
-                )
+            )
 
     @classmethod
     def add_user(cls, user_id: int) -> None:
@@ -57,9 +57,24 @@ class DB:
         return bool(cur.fetchone())
 
     @classmethod
-    def get_all_recent_classes(cls) -> list[str]:
-        cur: sqlite3.Cursor = cls.conn.execute('select gid from class')
+    def get_areas(cls) -> list[str]:
+        cur: sqlite3.Cursor = cls.conn.execute('select distinct area from class')
         return [i[0] for i in cur.fetchall()]
+
+    @classmethod
+    def get_all_recent_classes_for_area(cls, area: str) -> list[str]:
+        # only selects groups that have been active in the last 2 months
+        cur: sqlite3.Cursor = cls.conn.execute(
+            "select distinct gid from class join substitution using (gid) "
+            "where area = ? and day > strftime('%s', 'now') - 5172000",
+            (area,)
+            )
+        return [i[0] for i in cur.fetchall()]
+
+    @classmethod
+    def check_if_class_exists(cls, area: str, class_id: str) -> bool:
+        cur: sqlite3.Cursor = cls.conn.execute('select 1 from class where area = ? and gid = ?', (area, class_id))
+        return bool(cur.fetchone())
 
     @classmethod
     def add_user_to_class(cls, user_id: int, class_id: str) -> None:

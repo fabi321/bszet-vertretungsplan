@@ -7,7 +7,8 @@ create table if not exists credentials (
 );
 
 create table if not exists class (
-    gid text primary key
+    gid text primary key,
+    area text not null
 );
 
 create table if not exists user (

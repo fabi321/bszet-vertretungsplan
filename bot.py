@@ -11,6 +11,7 @@ from telegram.constants import ParseMode
 from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 import update_substitutions
+import set_class_flow
 import verify_flow
 from DB import DB
 
@@ -18,37 +19,9 @@ logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-async def setclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not DB.is_trusted_user(update.effective_user.id):
-        await update.message.reply_text('You need to be verified in order to use this command')
-        return
-    text: str = update.message.text.replace('/setclass', '').strip()
-    if not text or len(text) >= 15:
-        await update.message.reply_text('Please specify a class like "/setclass C_MI 21/3".')
-        return
-    if text not in DB.get_all_recent_classes():
-        await update.message.reply_text(
-            f'The class {text} is not known. If you believe that this is an error, check back later.'
-        )
-        return
-    DB.add_user_to_class(update.effective_user.id, text)
-    DB.update_user(update.effective_user.id, True)
-    await update.message.reply_text(f'You have successfully selected the class "{text}".')
-    await update_substitutions.update_user(update.effective_user.id, context.bot)
-
-
 async def removeclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     DB.clear_user_class(update.effective_user.id)
     await update.message.reply_text(f'You have successfully removed your previous class.')
-
-
-async def listclasses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not DB.is_trusted_user(update.effective_user.id):
-        await update.message.reply_text('You need to be verified in order to use this command')
-        return
-    response: str = 'All known classes:\n'
-    response += '\n'.join(DB.get_all_recent_classes())
-    await update.message.reply_text(response)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -94,9 +67,8 @@ def main() -> None:
     DB.init_db(Path(getenv('DATABASE_FILE')))
     app.add_handler(CommandHandler('start', start))
     app.add_handler(verify_flow.get_handler())
-    app.add_handler(CommandHandler('setclass', setclass))
+    app.add_handler(set_class_flow.get_conversation_handler())
     app.add_handler(CommandHandler('removeclass', removeclass))
-    app.add_handler(CommandHandler('listclasses', listclasses))
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
     app.add_error_handler(error_handler)
     updater_context: update_substitutions.CustomContext = update_substitutions.CustomContext()
