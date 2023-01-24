@@ -10,28 +10,12 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-import check_credentials
 import update_substitutions
+import verify_flow
 from DB import DB
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-async def verify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    text: str = update.message.text.replace('/verify ', '').replace(',', ' ')
-    parts: list[str] = text.split()
-    if len(parts) != 2:
-        await update.message.reply_text(
-            'Please specify the current login for geschuetzt.bszet.de, separated by space. E.g. /verify username password '
-            )
-        return
-    is_valid: bool = check_credentials.check(parts[0], parts[1])
-    if not is_valid:
-        await update.message.reply_text('Please use the following format: "username" "password".')
-    DB.add_credentials_if_new(parts[0], parts[1])
-    DB.trust_user(update.effective_user.id)
-    await update.message.reply_text('You have been successfully verified. Feel free to use /setclass now.')
 
 
 async def setclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -109,7 +93,7 @@ def main() -> None:
     app: Application = ApplicationBuilder().token(getenv('BOT_API_TOKEN')).build()
     DB.init_db(Path(getenv('DATABASE_FILE')))
     app.add_handler(CommandHandler('start', start))
-    app.add_handler(CommandHandler('verify', verify))
+    app.add_handler(verify_flow.get_handler())
     app.add_handler(CommandHandler('setclass', setclass))
     app.add_handler(CommandHandler('removeclass', removeclass))
     app.add_handler(CommandHandler('listclasses', listclasses))
