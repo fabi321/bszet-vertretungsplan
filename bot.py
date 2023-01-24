@@ -27,6 +27,9 @@ async def verify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def setclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not db.is_trusted_user(update.effective_user.id):
+        await update.message.reply_text('You need to be verified in order to use this command')
+        return
     text: str = update.message.text.replace('/setclass', '').strip()
     if not text or len(text) >= 15:
         await update.message.reply_text('Please specify a class like "/setclass C_MI 21/3".')
@@ -48,6 +51,9 @@ async def removeclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 
 async def listclasses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not db.is_trusted_user(update.effective_user.id):
+        await update.message.reply_text('You need to be verified in order to use this command')
+        return
     response: str = 'All known classes:\n'
     response += '\n'.join(db.get_all_recent_classes())
     await update.message.reply_text(response)

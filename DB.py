@@ -51,6 +51,10 @@ class DB:
         except sqlite3.Error as e:
             print(f'Error while trusting user: {e}')
 
+    def is_trusted_user(self, user_id: int) -> bool:
+        cur: sqlite3.Cursor = self.conn.execute('select 1 from user where uid = ? and trusted = 1', (user_id,))
+        return bool(cur.fetchone())
+
     def user_exists(self, user_id: int) -> bool:
         cur: sqlite3.Cursor = self.conn.execute('select 1 from user where uid = ?', (user_id,))
         return bool(cur.fetchone())
