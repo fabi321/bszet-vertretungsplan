@@ -1,14 +1,14 @@
-from os import getenv
-from pathlib import Path
-import logging
 import html
 import json
+import logging
 import traceback
+from os import getenv
+from pathlib import Path
 
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 from telegram.constants import ParseMode
+from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 import check_credentials
 import update_substitutions
@@ -23,7 +23,9 @@ async def verify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text: str = update.message.text.replace('/verify ', '').replace(',', ' ')
     parts: list[str] = text.split()
     if len(parts) != 2:
-        await update.message.reply_text('Please specify the current login for geschuetzt.bszet.de, separated by space. E.g. /verify username password ')
+        await update.message.reply_text(
+            'Please specify the current login for geschuetzt.bszet.de, separated by space. E.g. /verify username password '
+            )
         return
     is_valid: bool = check_credentials.check(parts[0], parts[1])
     if not is_valid:
@@ -116,7 +118,7 @@ def main() -> None:
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
     app.add_error_handler(error_handler)
     updater_context: update_substitutions.CustomContext = update_substitutions.CustomContext(db)
-    app.job_queue.run_repeating(update_substitutions.update, 5*60, data=updater_context)
+    app.job_queue.run_repeating(update_substitutions.update, 5 * 60, data=updater_context)
     app.run_polling()
 
 

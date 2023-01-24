@@ -90,11 +90,10 @@ class DB:
             self.__add_class_if_not_exists(s.group)
             cur: sqlite3.Cursor = transaction.execute(
                 "insert into substitution (gid, day, lesson, teacher, subject, room, notes) "
-                "values (?, ?, ?, ?, ?, ?, ?) on conflict (gid, day, lesson) do update set "
-                "teacher = excluded.teacher, subject = excluded.subject, room = excluded.room, "
-                "notes = excluded.notes, last_update = strftime('%s', 'now') "
-                "where teacher <> excluded.teacher or subject <> excluded.subject or "
-                "room <> excluded.room or notes <> excluded.notes returning *",
+                "values (?, ?, ?, ?, ?, ?, ?) on conflict (gid, day, lesson) do update set teacher = excluded.teacher, "
+                "subject = excluded.subject, room = excluded.room, notes = excluded.notes, "
+                "last_update = strftime('%s', 'now') where teacher <> excluded.teacher or "
+                "subject <> excluded.subject or room <> excluded.room or notes <> excluded.notes returning *",
                 (s.group, s.day, s.lesson, s.teacher, s.subject, s.room, s.notes)
             )
             return bool(cur.fetchone())
