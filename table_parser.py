@@ -83,7 +83,7 @@ def parse_tables(file: PdfReader) -> list[Table]:
             current_table.title = ' '.join(row.values())
         else:
             current_table.add_row(row)
-        last_y = y
+            last_y = y
 
     if current_table:
         results.append(current_table)
