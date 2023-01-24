@@ -38,6 +38,7 @@ class Table:
     def __str__(self) -> str:
         result: str = str(self.title) + '\n'
         result += '|' + '|'.join(str(i) for i in self.head) + '|\n'
+        result += '|' + '|'.join('-' * len(i) for i in self.head) + '|\n'
         for row in self.rows:
             result += '|' + '|'.join(str(i) for i in row) + '|\n'
         return result
@@ -75,7 +76,7 @@ def parse_tables(file: PdfReader) -> list[Table]:
 
     for y in sorted(elements.keys()):
         row: dict[float, str] = elements[y]
-        is_distant: bool = y - last_y > median_dist + 10
+        is_distant: bool = y - last_y > 30
         if is_distant and current_table:
             results.append(current_table)
             current_table = Table()
