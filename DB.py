@@ -96,45 +96,6 @@ class DB:
         cur: sqlite3.Cursor = self.conn.execute('select uid from user where gid = ?', (gid,))
         return [i[0] for i in cur.fetchall()]
 
-    def __check_if_substitution_exists(self, s: Substitution) -> Optional[int]:
-        cur: sqlite3.Cursor = self.conn.execute(
-            'select sid from substitution where day = ? and lesson = ? and gid = ?',
-            (s.day, s.lesson, s.group)
-        )
-        if res := cur.fetchone():
-            return res[0]
-        return None
-
-    def __check_substitution_difference(self, s: Substitution, sid: int) -> bool:
-        cur: sqlite3.Cursor = self.conn.execute('select * from substitution where sid = ?', (sid,))
-        res = cur.fetchone()
-        return (
-                res[4] != s.teacher
-                or res[5] != s.subject
-                or res[6] != s.room
-                or res[7] != s.notes
-        )
-
-    def __update_substitution(self, s: Substitution, sid: int) -> None:
-        try:
-            with self.conn as transaction:
-                transaction.execute(
-                    "update substitution set teacher = ?, subject = ?, room = ?, notes = ?, last_update = strftime('%s', 'now') where sid = ?",
-                    (s.teacher, s.subject, s.room, s.notes, sid)
-                )
-        except sqlite3.Error as e:
-            print(f'Error while trying to update substitution: {e}')
-
-    def __create_substitution(self, s: Substitution) -> None:
-        try:
-            with self.conn as transaction:
-                transaction.execute(
-                    'insert into substitution (gid, day, lesson, teacher, subject, room, notes) values (?, ?, ?, ?, ?, ?, ?)',
-                    (s.group, s.day, s.lesson, s.teacher, s.subject, s.room, s.notes)
-                )
-        except sqlite3.Error as e:
-            print(f'Error while trying to create substitution: {e}')
-
     def __add_class_if_not_exists(self, gid: str) -> None:
         cur: sqlite3.Cursor = self.conn.execute('select 1 from class where gid = ?', (gid,))
         if cur.fetchone():
@@ -145,13 +106,20 @@ class DB:
         except sqlite3.Error as e:
             print(f'Error while trying to add a class: {e}')
 
-    def insert_or_modify_substitution(self, substitution: Substitution) -> bool:
-        self.__add_class_if_not_exists(substitution.group)
-        if (sid := self.__check_if_substitution_exists(substitution)) is not None:
-            if self.__check_substitution_difference(substitution, sid):
-                self.__update_substitution(substitution, sid)
-            else:
-                return False
-        else:
-            self.__create_substitution(substitution)
-        return True
+    def insert_or_modify_substitution(self, s: Substitution) -> bool:
+        try:
+            with self.conn as transaction:
+                self.__add_class_if_not_exists(s.group)
+                cur: sqlite3.Cursor = transaction.execute(
+                    "insert into substitution (gid, day, lesson, teacher, subject, room, notes) "
+                    "values (?, ?, ?, ?, ?, ?, ?) on conflict (gid, day, lesson) do update set "
+                    "teacher = excluded.teacher, subject = excluded.subject, room = excluded.room, "
+                    "notes = excluded.notes, last_update = strftime('%s', 'now') "
+                    "where teacher <> excluded.teacher or subject <> excluded.subject or "
+                    "room <> excluded.room or notes <> excluded.notes returning *",
+                    (s.group, s.day, s.lesson, s.teacher, s.subject, s.room, s.notes)
+                )
+                return bool(cur.fetchone())
+        except sqlite3.Error as e:
+            print(f'Error while trying to insert substitution: {e}')
+        return False
