@@ -1,6 +1,7 @@
 import re
 
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram.constants import ParseMode
 from telegram.ext import ConversationHandler, ContextTypes, CommandHandler, MessageHandler, filters
 
 import update_substitutions
@@ -35,6 +36,12 @@ async def area_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         )
         return ConversationHandler.END
     context.user_data['area'] = area
+    if area == 'bgy':
+        await update.message.reply_text(
+            '*Warnung: Es ist bekannt, dass der Vertretungsplan für das BGy manchmal nicht korrekt eingelesen wird!* '
+            'Ob eine Vertretung da ist oder nicht, sollte functionieren, aber die Details könnten fehlen.',
+            parse_mode=ParseMode.MARKDOWN_V2
+            )
     markup: ReplyKeyboardMarkup = ReplyKeyboardMarkup(
         classes, one_time_keyboard=True, resize_keyboard=True, input_field_placeholder='Klasse'
     )
@@ -53,7 +60,7 @@ async def class_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await update.message.reply_text(
                 'Die Klasse wurde noch nicht gefunden. Bist du dir sicher, dass du sie richtig geschrieben hast?',
                 reply_markup=ReplyKeyboardMarkup([['Nein', 'Ja']], resize_keyboard=True)
-                )
+            )
             return SAVE_CLASS
         await update.message.reply_text('Leider wurde die Klasse nicht gefunden', reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
@@ -74,7 +81,7 @@ async def save_class(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         DB.add_class_if_not_exists(class_name, area)
         await update.message.reply_text(
             f'Erfolgreich zu Klasse {class_name} hinzugefügt.', reply_markup=ReplyKeyboardRemove()
-            )
+        )
     else:
         await update.message.reply_text('Nicht zur Gruppe hinzugefüft', reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
