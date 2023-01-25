@@ -113,14 +113,14 @@ class DB:
         return [i[0] for i in cur.fetchall()]
 
     @classmethod
-    def __add_class_if_not_exists(cls, gid: str, area: str) -> None:
+    def add_class_if_not_exists(cls, gid: str, area: str) -> None:
         with cls.conn as transaction:
             transaction.execute('insert into class (gid, area) values (?, ?) on conflict do nothing', (gid, area))
 
     @classmethod
     def insert_or_modify_substitution(cls, s: Substitution) -> bool:
         with cls.conn as transaction:
-            cls.__add_class_if_not_exists(s.group, s.area)
+            cls.add_class_if_not_exists(s.group, s.area)
             cur: sqlite3.Cursor = transaction.execute(
                 "insert into substitution (gid, day, lesson, teacher, subject, room, notes) "
                 "values (?, ?, ?, ?, ?, ?, ?) on conflict (gid, day, lesson) do update set teacher = excluded.teacher, "

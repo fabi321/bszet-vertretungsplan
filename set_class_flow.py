@@ -1,10 +1,13 @@
+import re
+
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler, ContextTypes, CommandHandler, MessageHandler, filters
 
 import update_substitutions
 from DB import DB
 
-SELECT_AREA, SELECT_CLASS = range(2)
+SELECT_AREA, SELECT_CLASS, SAVE_CLASS = range(3)
+CLASS_REGEX: re.Pattern = re.compile(r'^(?:[A-Z]_[A-Z]+ ?[0-9]+/[0-9]+|[A-Z]+ ?[0-9]+)$')
 
 
 def group_entries(plain: list[str]) -> list[list[str]]:
@@ -44,6 +47,14 @@ async def class_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     area: str = context.user_data['area']
     del context.user_data['area']
     if not DB.check_if_class_exists(area, class_name):
+        if CLASS_REGEX.match(class_name) and len(class_name) < 20:
+            context.user_data['class'] = class_name
+            context.user_data['area'] = area
+            await update.message.reply_text(
+                'Die Klasse wurde noch nicht gefunden. Bist du dir sicher, dass du sie richtig geschrieben hast?',
+                reply_markup=ReplyKeyboardMarkup([['Nein', 'Ja']], resize_keyboard=True)
+                )
+            return SAVE_CLASS
         await update.message.reply_text('Leider wurde die Klasse nicht gefunden', reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
     DB.add_user_to_class(update.effective_user.id, class_name)
@@ -55,9 +66,22 @@ async def class_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return ConversationHandler.END
 
 
+async def save_class(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    class_name: str = context.user_data['class']
+    area: str = context.user_data['area']
+    context.user_data.clear()
+    if update.message.text == 'Ja':
+        DB.add_class_if_not_exists(class_name, area)
+        await update.message.reply_text(
+            f'Erfolgreich zu Klasse {class_name} hinzugefügt.', reply_markup=ReplyKeyboardRemove()
+            )
+    else:
+        await update.message.reply_text('Nicht zur Gruppe hinzugefüft', reply_markup=ReplyKeyboardRemove())
+    return ConversationHandler.END
+
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    if 'area' in context.user_data:
-        del context.user_data['area']
+    context.user_data.clear()
     await update.message.reply_text('Erfolgreich abgebrochen', reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
@@ -68,6 +92,7 @@ def get_handler() -> ConversationHandler:
         states={
             SELECT_AREA: [MessageHandler(filters.TEXT & ~filters.COMMAND, area_selected)],
             SELECT_CLASS: [MessageHandler(filters.TEXT & ~filters.COMMAND, class_selected)],
+            SAVE_CLASS: [MessageHandler(filters.TEXT, save_class)]
         },
         fallbacks=[CommandHandler('cancel', cancel)]
     )
