@@ -10,9 +10,9 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-import update_substitutions
 import set_class_flow
 import stop_flow
+import update_substitutions
 import verify_flow
 from DB import DB
 

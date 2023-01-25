@@ -29,7 +29,7 @@ async def area_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if not classes:
         await update.message.reply_text(
             'Leider wurden für den Bereich keine Klassen gefunden', reply_markup=ReplyKeyboardRemove()
-            )
+        )
         return ConversationHandler.END
     context.user_data['area'] = area
     markup: ReplyKeyboardMarkup = ReplyKeyboardMarkup(

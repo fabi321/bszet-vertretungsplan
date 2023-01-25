@@ -1,9 +1,12 @@
+import re
 from statistics import median_high
 from typing import Optional
 
 from PyPDF2 import PdfReader
 
 Elements = dict[float, dict[float, str]]
+
+DATE_REGEX: re.Pattern = re.compile(r'[a-zA-Z] [0-9]{2}\.[0-9]{2}\.[0-9]{2,4}')
 
 
 class Table:
@@ -45,12 +48,15 @@ class Table:
 
 
 def create_visitor(elements: Elements, page_offset: int):
-    def visitor(text: str, cm, *_):
+    def visitor(text: str, cm, tm, *_):
         text = text.strip()
         if not text:
             return
         x: float = cm[4]
         y: float = -cm[5] + page_offset
+        if tm[5] < 1000:
+            x += tm[4]
+            y += tm[5]
         if not elements.get(y):
             elements[y] = {}
         elements[y][x] = text
@@ -64,7 +70,7 @@ def parse_tables(file: PdfReader) -> list[Table]:
 
     for page in file.pages:
         page.extract_text(visitor_text=create_visitor(elements, page_offset))
-        page_offset += page.mediabox.height
+        page_offset += float(page.mediabox.height)
 
     lines: list[float] = list(sorted(k for k, v in elements.items() if len(v) > 2))
     distances: list[float] = [f - c for c, f in zip(lines, lines[1:])]
@@ -81,9 +87,14 @@ def parse_tables(file: PdfReader) -> list[Table]:
             results.append(current_table)
             current_table = Table()
         if len(row) <= 2:
-            current_table.title = ' '.join(row.values())
+            joined: str = ' '.join(row.values())
+            if DATE_REGEX.search(joined):
+                current_table.title = joined
         else:
-            current_table.add_row(row)
+            if current_table.title:
+                current_table.add_row(row)
+            else:
+                results[-1].add_row(row)
             last_y = y
 
     if current_table:

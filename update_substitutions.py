@@ -38,7 +38,7 @@ def do_update(context: CustomContext) -> list[str]:
     if resp.status_code != 200:
         print(f'Error fetching document, {resp.text}')
         return []
-    pdf: PDF = PDF.from_bytes(resp.content)
+    pdf: PDF = PDF.from_bytes(resp.content, 'bs-it')
     for substitution in pdf.to_substitutions():
         if DB.insert_or_modify_substitution(substitution):
             updated_groups.add(substitution.group)

@@ -3,7 +3,7 @@ from typing import Optional
 
 class Substitution:
     def __init__(
-        self, group: str, day: int, lesson: int, teacher: str, subject: str, room: str, notes: Optional[str],
+        self, group: str, day: int, lesson: int, teacher: str, subject: str, room: str, notes: Optional[str], area: str,
         is_new: bool
     ) -> None:
         self.group: str = group
@@ -13,6 +13,7 @@ class Substitution:
         self.subject: str = subject
         self.room: str = room
         self.notes: Optional[str] = notes
+        self.area: str = area
         self.is_new: bool = is_new
 
     def __repr__(self) -> str:

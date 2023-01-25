@@ -73,7 +73,7 @@ class DB:
             "select distinct gid from class join substitution using (gid) "
             "where area = ? and day > strftime('%s', 'now') - 5172000",
             (area,)
-            )
+        )
         return [i[0] for i in cur.fetchall()]
 
     @classmethod
@@ -94,9 +94,9 @@ class DB:
     @classmethod
     def get_all_substitutions_for_user(cls, uid: int) -> list[Substitution]:
         cur: sqlite3.Cursor = cls.conn.execute(
-            "select gid, day, lesson, teacher, subject, room, notes, u.last_update < s.last_update from user u"
-            " join substitution s using (gid) where uid = ? and day > strftime('%s', 'now') - 86200"
-            " order by day, lesson asc",
+            "select gid, day, lesson, teacher, subject, room, notes, area, u.last_update < s.last_update from user u"
+            " join substitution s using (gid) join class using (gid) where uid = ? and "
+            "day > strftime('%s', 'now') - 86200 order by day, lesson asc",
             (uid,)
         )
         return [Substitution(*row) for row in cur.fetchall()]
@@ -113,14 +113,14 @@ class DB:
         return [i[0] for i in cur.fetchall()]
 
     @classmethod
-    def __add_class_if_not_exists(cls, gid: str) -> None:
+    def __add_class_if_not_exists(cls, gid: str, area: str) -> None:
         with cls.conn as transaction:
-            transaction.execute('insert into class (gid) values (?) on conflict do nothing', (gid,))
+            transaction.execute('insert into class (gid, area) values (?, ?) on conflict do nothing', (gid, area))
 
     @classmethod
     def insert_or_modify_substitution(cls, s: Substitution) -> bool:
         with cls.conn as transaction:
-            cls.__add_class_if_not_exists(s.group)
+            cls.__add_class_if_not_exists(s.group, s.area)
             cur: sqlite3.Cursor = transaction.execute(
                 "insert into substitution (gid, day, lesson, teacher, subject, room, notes) "
                 "values (?, ?, ?, ?, ?, ?, ?) on conflict (gid, day, lesson) do update set teacher = excluded.teacher, "
