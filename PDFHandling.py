@@ -34,7 +34,7 @@ class PDF:
             last_day: str = ''
             for row in table.rows:
                 PDF.__remove_dots_from_row(row)
-                if row[0]:
+                if row[0] and 'Klasse' not in row[0]:
                     last_date = row[0]
                     last_day = row[1]
                 else:
