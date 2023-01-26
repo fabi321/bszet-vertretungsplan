@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 import requests
@@ -10,39 +11,44 @@ from telegram.helpers import escape_markdown
 from DB import DB
 from PDFHandling import PDF
 
+VERTRETUNGSPLAN_REGEX: re.Pattern = re.compile(r'vertretungsplan-([a-z-]+)\.pdf')
+
 
 class CustomContext:
     def __init__(self) -> None:
-        self.last_updated: datetime = datetime.min
+        self.last_updated: dict[str, datetime] = {}
 
 
-def is_updated(context: CustomContext) -> bool:
+def is_updated(context: CustomContext) -> set[str]:
     auth: tuple[str, str] = DB.get_latest_credential()
     resp: requests.Response = requests.get('https://geschuetzt.bszet.de/index.php?dir=/Vertretungsplaene', auth=auth)
     if resp.status_code != 200:
         print(f'Error fetching status, {resp.text}')
-        return False
+        return set()
     soup: BeautifulSoup = BeautifulSoup(resp.text, 'html.parser')
-    tr = soup.find(string='vertretungsplan-bs-it.pdf').find_parent('tr')
-    last_updated_txt: str = tr.find(class_='FileListCellInfo').text.strip()
-    last_updated = datetime.strptime(last_updated_txt, '%d.%m.%Y, %H:%M:%S')
-    return last_updated > context.last_updated
+    to_update: set[str] = set()
+    for a in soup.find_all(href=VERTRETUNGSPLAN_REGEX):
+        tr = a.find_parent('tr')
+        href: str = a['href']
+        last_updated_txt: str = tr.find(class_='FileListCellInfo').text.strip()
+        last_updated = datetime.strptime(last_updated_txt, '%d.%m.%Y, %H:%M:%S')
+        if last_updated > context.last_updated.get(href, datetime.min):
+            to_update.add(href)
 
 
-def do_update(context: CustomContext) -> list[str]:
+def do_update(context: CustomContext, to_update: set[str]) -> list[str]:
     updated_groups: set[str] = set()
     auth: tuple[str, str] = DB.get_latest_credential()
-    resp: requests.Response = requests.get(
-        'https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/vertretungsplan-bs-it.pdf', auth=auth
-    )
-    if resp.status_code != 200:
-        print(f'Error fetching document, {resp.text}')
-        return []
-    pdf: PDF = PDF.from_bytes(resp.content, 'bs-it')
-    for substitution in pdf.to_substitutions():
-        if DB.insert_or_modify_substitution(substitution):
-            updated_groups.add(substitution.group)
-    context.last_updated = datetime.now()
+    for plan in to_update:
+        resp: requests.Response = requests.get(f'https://geschuetzt.bszet.de/{plan}', auth=auth)
+        if resp.status_code != 200:
+            print(f'Error fetching document, {resp.text}')
+            return []
+        pdf: PDF = PDF.from_bytes(resp.content, VERTRETUNGSPLAN_REGEX.search(plan).group(1))
+        for substitution in pdf.to_substitutions():
+            if DB.insert_or_modify_substitution(substitution):
+                updated_groups.add(substitution.group)
+        context.last_updated[plan] = datetime.now()
     return list(updated_groups)
 
 
@@ -72,6 +78,6 @@ async def message_users(context: CallbackContext, updated: list[str]) -> None:
 
 
 async def update(context: CallbackContext):
-    if is_updated(context.job.data):
-        updated: list[str] = do_update(context.job.data)
+    if to_update := is_updated(context.job.data):
+        updated: list[str] = do_update(context.job.data, to_update)
         await message_users(context, updated)
