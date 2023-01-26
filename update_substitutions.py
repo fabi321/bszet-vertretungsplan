@@ -32,7 +32,7 @@ def is_updated(context: CustomContext) -> set[str]:
         href: str = a['href']
         last_updated_txt: str = tr.find(class_='FileListCellInfo').text.strip()
         last_updated = datetime.strptime(last_updated_txt, '%d.%m.%Y, %H:%M:%S')
-        if last_updated > context.last_updated.get(href, datetime.min):
+        if last_updated > context.last_updated.get(href, datetime.min) and not href.endswith('fs.pdf'):
             to_update.add(href)
     return to_update
 
