@@ -38,7 +38,7 @@ async def area_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     context.user_data['area'] = area
     if area == 'bgy':
         await update.message.reply_text(
-            '*Warnung: Es ist bekannt, dass der Vertretungsplan für das BGy manchmal nicht korrekt eingelesen wird\!* '
+            '*Warnung: Es ist bekannt, dass der Vertretungsplan für das BGy manchmal nicht korrekt eingelesen wird\\!* '
             'Ob eine Vertretung da ist oder nicht, sollte functionieren, aber die Details könnten fehlen.',
             parse_mode=ParseMode.MARKDOWN_V2
             )
