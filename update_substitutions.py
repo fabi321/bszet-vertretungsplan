@@ -34,6 +34,7 @@ def is_updated(context: CustomContext) -> set[str]:
         last_updated = datetime.strptime(last_updated_txt, '%d.%m.%Y, %H:%M:%S')
         if last_updated > context.last_updated.get(href, datetime.min):
             to_update.add(href)
+    return to_update
 
 
 def do_update(context: CustomContext, to_update: set[str]) -> list[str]:
