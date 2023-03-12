@@ -7,6 +7,7 @@ from telegram import Bot
 from telegram.constants import ParseMode
 from telegram.ext import CallbackContext
 from telegram.helpers import escape_markdown
+from telegram.error import Forbidden
 
 from DB import DB
 from PDFHandling import PDF
@@ -68,7 +69,10 @@ async def update_user(uid: int, bot: Bot) -> None:
         result += line + '\n'
     if is_new:
         DB.update_user(uid)
-        await bot.send_message(chat_id=uid, text=result, parse_mode=ParseMode.MARKDOWN_V2)
+        try:
+            await bot.send_message(chat_id=uid, text=result, parse_mode=ParseMode.MARKDOWN_V2)
+        except Forbidden:
+            DB.delete_user(uid)
 
 
 async def message_users(context: CallbackContext, updated: list[str]) -> None:
