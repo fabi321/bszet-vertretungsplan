@@ -68,9 +68,9 @@ async def update_user(uid: int, bot: Bot) -> None:
             is_new = True
         result += line + '\n'
     if is_new:
-        DB.update_user(uid)
         try:
             await bot.send_message(chat_id=uid, text=result, parse_mode=ParseMode.MARKDOWN_V2)
+            DB.update_user(uid)
         except Forbidden:
             DB.delete_user(uid)
 
