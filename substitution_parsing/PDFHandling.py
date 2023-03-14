@@ -8,8 +8,8 @@ from typing import Optional
 
 from PyPDF2 import PdfReader
 
-from Substitution import Substitution
-from table_parser import parse_tables, Table
+from .Substitution import Substitution
+from .table_parser import parse_tables, Table
 
 DOT_REGEX: re.Pattern = re.compile(r'\.+$')
 

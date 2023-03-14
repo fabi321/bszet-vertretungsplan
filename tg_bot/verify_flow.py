@@ -2,7 +2,7 @@ import requests
 from telegram import Update
 from telegram.ext import ConversationHandler, ContextTypes, CommandHandler, MessageHandler, filters
 
-from DB import DB
+from util.DB import DB
 
 ENTER_USERNAME, ENTER_PASSWORD = range(2)
 
@@ -15,7 +15,7 @@ def check_credentials(username: str, password: str) -> bool:
 
 
 async def verify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text('Bitte gib den Nutzernamen ein oder brich mit /cancel ab.')
+    await update.message.reply_text('Bitte gib den Nutzernamen für geschuetzt.bszet.de ein oder brich mit /cancel ab.')
     return ENTER_USERNAME
 
 

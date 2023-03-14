@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ConversationHandler, ContextTypes, CommandHandler, MessageHandler, filters
 
-from DB import DB
+from util.DB import DB
 
 STOP: int = 0
 

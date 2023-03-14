@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from Substitution import Substitution
+from substitution_parsing.Substitution import Substitution
 
 
 def password_to_credentials_id(password: str) -> int:
@@ -99,6 +99,14 @@ class DB:
             (uid,)
         )
         return [Substitution(*row) for row in cur.fetchall()]
+
+    @classmethod
+    def get_all_updated_users(cls) -> list[int]:
+        cur: sqlite3.Cursor = cls.conn.execute(
+            "select distinct uid from user u join substitution s using (gid) "
+            "where s.last_update > u.last_update and day > strftime('%s', 'now') - 86200"
+        )
+        return [i[0] for i in cur.fetchall()]
 
     @classmethod
     def update_user(cls, user_id: int, is_zero: bool = False) -> None:

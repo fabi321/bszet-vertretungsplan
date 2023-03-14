@@ -4,8 +4,9 @@ from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.constants import ParseMode
 from telegram.ext import ConversationHandler, ContextTypes, CommandHandler, MessageHandler, filters
 
-import update_substitutions
-from DB import DB
+from util.DB import DB
+
+from .update_users import update_user
 
 SELECT_AREA, SELECT_CLASS, SAVE_CLASS = range(3)
 CLASS_REGEX: re.Pattern = re.compile(r'^(?:[A-Z]_[A-Z]+ ?[0-9]+/[0-9]+|[A-Z]+ ?[0-9]+)$')
@@ -69,7 +70,7 @@ async def class_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text(
         f'Du hast erfolgreich die Klasse {class_name} ausgewählt.', reply_markup=ReplyKeyboardRemove()
     )
-    await update_substitutions.update_user(update.effective_user.id, context.bot)
+    await update_user(update.effective_user.id, context.bot)
     return ConversationHandler.END
 
 

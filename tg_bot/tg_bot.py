@@ -3,18 +3,16 @@ import json
 import logging
 import traceback
 from os import getenv
-from pathlib import Path
 
-from dotenv import load_dotenv
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-import set_class_flow
-import stop_flow
-import update_substitutions
-import verify_flow
-from DB import DB
+import tg_bot.set_class_flow
+import tg_bot.stop_flow
+import tg_bot.update_users
+import tg_bot.verify_flow
+from util.DB import DB
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,16 +20,16 @@ logger = logging.getLogger(__name__)
 
 async def removeclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     DB.clear_user_class(update.effective_user.id)
-    await update.message.reply_text(f'You have successfully removed your previous class.')
+    await update.message.reply_text(f'Letzte Klasse erfolgreich entfernt.')
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     DB.add_user(update.effective_user.id)
-    await update.message.reply_text('To start using this bot, please verify that you know the login using /verify.')
+    await update.message.reply_text('Um diesen Bot zu verwenden, verifiziere dich mit /verify.')
 
 
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Sorry, I didn't understand that command.")
+    await update.message.reply_text("Sorry, den Befehl kenne ich nicht.")
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -63,20 +61,13 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 def main() -> None:
-    load_dotenv()
     app: Application = ApplicationBuilder().token(getenv('BOT_API_TOKEN')).build()
-    DB.init_db(Path(getenv('DATABASE_FILE')))
     app.add_handler(CommandHandler('start', start))
-    app.add_handler(verify_flow.get_handler())
-    app.add_handler(set_class_flow.get_handler())
-    app.add_handler(stop_flow.get_handler())
+    app.add_handler(tg_bot.verify_flow.get_handler())
+    app.add_handler(tg_bot.set_class_flow.get_handler())
+    app.add_handler(tg_bot.stop_flow.get_handler())
     app.add_handler(CommandHandler('clear_class', removeclass))
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
     app.add_error_handler(error_handler)
-    updater_context: update_substitutions.CustomContext = update_substitutions.CustomContext()
-    app.job_queue.run_repeating(update_substitutions.update, 5 * 60, data=updater_context)
+    app.job_queue.run_repeating(tg_bot.update_users.message_users, 5 * 60)
     app.run_polling()
-
-
-if __name__ == '__main__':
-    main()
