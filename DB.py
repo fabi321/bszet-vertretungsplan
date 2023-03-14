@@ -68,10 +68,9 @@ class DB:
 
     @classmethod
     def get_all_recent_classes_for_area(cls, area: str) -> list[str]:
-        # only selects groups that have been active in the last 2 months
+        # only selects groups that have been active in the last 3 months
         cur: sqlite3.Cursor = cls.conn.execute(
-            "select distinct gid from class join substitution using (gid) "
-            "where area = ? and day > strftime('%s', 'now') - 5172000",
+            "select gid from class where area = ? and last_update > strftime('%s', 'now') - 7777777",
             (area,)
         )
         return [i[0] for i in cur.fetchall()]
@@ -121,6 +120,7 @@ class DB:
     def insert_or_modify_substitution(cls, s: Substitution) -> bool:
         with cls.conn as transaction:
             cls.add_class_if_not_exists(s.group, s.area)
+            transaction.execute("update class set last_update = strftime('%s', 'now') where gid = ?", (s.group,))
             cur: sqlite3.Cursor = transaction.execute(
                 "insert into substitution (gid, day, lesson, teacher, subject, room, notes) "
                 "values (?, ?, ?, ?, ?, ?, ?) on conflict (gid, day, lesson) do update set teacher = excluded.teacher, "

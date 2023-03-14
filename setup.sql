@@ -8,7 +8,8 @@ create table if not exists credentials (
 
 create table if not exists class (
     gid text primary key,
-    area text not null
+    area text not null,
+    last_update int not null default (strftime('%s', 'now'))
 );
 
 create table if not exists user (
