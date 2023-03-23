@@ -2,3 +2,4 @@
 .venv
 Database.db
 .env
+__pycache__
