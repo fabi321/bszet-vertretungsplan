@@ -91,9 +91,3 @@ class PDF:
             reader: PdfReader = PdfReader(pdf_file)
             return PDF(reader, area)
 
-
-if __name__ == '__main__':
-    pdf = PDF.from_file(Path('vertretungsplan-bs-it.pdf'), 'bs-it')
-    for table in pdf.tables:
-        print(str(table))
-    print(pdf.to_substitutions())
