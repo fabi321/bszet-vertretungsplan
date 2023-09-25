@@ -3,10 +3,12 @@ import json
 import logging
 import traceback
 from os import getenv
+import asyncio
 
 from telegram import Update
+from telegram.error import TelegramError
 from telegram.constants import ParseMode
-from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters, Updater
 
 import tg_bot.set_class_flow
 import tg_bot.stop_flow
@@ -60,7 +62,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     )
 
 
-def main() -> None:
+async def main() -> None:
     app: Application = ApplicationBuilder().token(getenv('BOT_API_TOKEN')).build()
     app.add_handler(CommandHandler('start', start))
     app.add_handler(tg_bot.verify_flow.get_handler())
@@ -69,5 +71,19 @@ def main() -> None:
     app.add_handler(CommandHandler('clear_class', removeclass))
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
     app.add_error_handler(error_handler)
-    app.job_queue.run_repeating(tg_bot.update_users.message_users, 5 * 60)
-    app.run_polling()
+    app.job_queue.run_repeating(tg_bot.update_users.message_users, 60)
+
+    def error_callback(exc: TelegramError) -> None:
+            app.create_task(app.process_error(error=exc, update=None))
+
+    async with app:
+        try:
+            await app.updater.start_polling(error_callback=error_callback)
+            await app.start()
+            while True:
+                await asyncio.sleep(100)
+        except:
+            await app.updater.stop()
+            await app.stop()
+            await app.shutdown()
+

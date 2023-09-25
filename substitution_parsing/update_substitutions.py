@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
-from time import sleep
+from asyncio import sleep
+from sqlite3 import IntegrityError
 
 import requests
 from bs4 import BeautifulSoup
@@ -38,7 +39,11 @@ def do_update(last_updated: dict[str, datetime], to_update: set[str]) -> None:
             return
         pdf: PDF = PDF.from_bytes(resp.content, VERTRETUNGSPLAN_REGEX.search(plan).group(1))
         for substitution in pdf.to_substitutions():
-            DB.insert_or_modify_substitution(substitution)
+            try:
+                DB.insert_or_modify_substitution(substitution)
+            except IntegrityError:
+                # don't crash due to integrity error
+                print(substitution)
         last_updated[plan] = datetime.now()
 
 
@@ -47,8 +52,8 @@ def update(last_updated: dict[str, datetime]):
         do_update(last_updated, to_update)
 
 
-def continuous_update():
+async def continuous_update():
     last_updated: dict[str, datetime] = {}
     while True:
         update(last_updated)
-        sleep(5 * 60)
+        await sleep(5 * 60)
