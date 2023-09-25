@@ -70,7 +70,7 @@ class PDF:
                 if 'Klasse' in row[0]:
                     continue
                 substitutions.append(
-                    Substitution(row[0], timestamp, int(row[1]), row[4] or '', row[2] or '', row[3] or '', row[5],
+                    Substitution(row[0], timestamp, int(row[1] or 0), row[4] or '', row[2] or '', row[3] or '', row[5],
                                  self.area, True)
                 )
         return substitutions
