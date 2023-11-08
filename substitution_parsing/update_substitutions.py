@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from asyncio import sleep
 from sqlite3 import IntegrityError
+from logging import info
 
 import requests
 from bs4 import BeautifulSoup
@@ -33,6 +34,7 @@ def is_updated(last_updated: dict[str, datetime]) -> set[str]:
 def do_update(last_updated: dict[str, datetime], to_update: set[str]) -> None:
     auth: tuple[str, str] = DB.get_latest_credential()
     for plan in to_update:
+        info(f"updating substitution plan {plan}")
         resp: requests.Response = requests.get(f'https://geschuetzt.bszet.de/{plan}', auth=auth)
         if resp.status_code != 200:
             print(f'Error fetching document, {resp.text}')
@@ -48,6 +50,7 @@ def do_update(last_updated: dict[str, datetime], to_update: set[str]) -> None:
 
 
 def update(last_updated: dict[str, datetime]):
+    info("Checking for new substitution plans")
     if to_update := is_updated(last_updated):
         do_update(last_updated, to_update)
 
