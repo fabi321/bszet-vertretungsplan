@@ -19,35 +19,29 @@ tree = app_commands.CommandTree(client)
 DISCORD: str = "dc"
 
 
-@tree.command(description="Initialisiere den Bot")
-async def start(interaction: discord.Interaction):
-    allowed: bool
-    if not interaction.guild:
-        allowed = True
-    else:
-        bot_member: discord.Member = interaction.guild.get_member(client.user.id)
-        allowed = interaction.channel.permissions_for(bot_member).send_messages
-    if allowed:
-        DB.add_user(interaction.channel_id, platform=DISCORD)
-        await interaction.response.send_message("Bot gestartet, fahre mit /verify fort")
-    else:
-        await interaction.response.send_message("Initialisieren fehlgeschlagen. Stelle sicher, dass der Bot im Channel schreiben darf.")
-
-
 @tree.command(description="Verifiziere dass du die Zugangsdaten kennst")
 @app_commands.describe(
     username="Nutzername für geschuetzt.bszet.de",
     password="Passwort für geschuetzt.bszet.de"
 )
 async def verify(interaction: discord.Interaction, username: str, password: str):
-    if DB.user_exists(interaction.channel_id, platform=DISCORD):
-        if check_credentials(username, password):
-            DB.trust_user(interaction.channel_id, platform=DISCORD)
-            await interaction.response.send_message("Erfolgreich verifiziert. Du kannst nun eine Klasse mit /set_class setzen")
-        else:
-            await interaction.response.sent_message("Ungültige Zugangsdaten")
+    allowed: bool
+    if not interaction.guild:
+        allowed = True
     else:
-        await interaction.response.send_message("Bite starte erst mit /start")
+        bot_member: discord.Member = interaction.guild.get_member(client.user.id)
+        allowed = interaction.channel.permissions_for(bot_member).send_messages
+    if not allowed:
+        await interaction.response.send_message(
+            "Initialisieren fehlgeschlagen. Stelle sicher, dass der Bot im Channel schreiben darf."
+            )
+        return
+    DB.add_user(interaction.channel_id, platform=DISCORD)
+    if check_credentials(username, password):
+        DB.trust_user(interaction.channel_id, platform=DISCORD)
+        await interaction.response.send_message("Erfolgreich verifiziert. Du kannst nun eine Klasse mit /set_class setzen")
+    else:
+        await interaction.response.sent_message("Ungültige Zugangsdaten")
 
 
 @tree.command(description="Setze eine Klasse, fur die Vertretungen gesendet werden sollen")
