@@ -7,7 +7,7 @@ from substitution_parsing.Substitution import Substitution
 
 
 def password_to_credentials_id(password: str) -> int:
-    return int(password.split('#')[1])
+    return int(password.split('#')[-1])
 
 
 class DB:
