@@ -45,20 +45,24 @@ class PDF:
         substitutions: list[Substitution] = []
         for table in self.tables:
             for row in table.rows:
-                date: datetime.datetime = datetime.datetime.strptime(row[0], '%d.%m.%Y')
-                substitutions.append(
-                    Substitution(
-                        row[6],
-                        round(date.timestamp()),
-                        int(row[2]),
-                        row[3],
-                        row[4],
-                        row[5],
-                        row[7],
-                        self.area,
-                        True,
+                try:
+                    date: datetime.datetime = datetime.datetime.strptime(row[0], '%d.%m.%Y')
+                    substitutions.append(
+                        Substitution(
+                            row[6],
+                            round(date.timestamp()),
+                            int(row[2]),
+                            row[3],
+                            row[4],
+                            row[5],
+                            row[7],
+                            self.area,
+                            True,
+                        )
                     )
-                )
+                except ValueError:
+                    print(row[0])
+                    ...  # invalid entry
         return substitutions
 
     def __to_other_substitutions(self) -> list[Substitution]:
