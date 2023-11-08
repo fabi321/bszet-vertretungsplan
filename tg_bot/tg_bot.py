@@ -1,6 +1,5 @@
 import html
 import json
-import logging
 import traceback
 from os import getenv
 import asyncio
@@ -15,9 +14,6 @@ import tg_bot.stop_flow
 import tg_bot.update_users
 import tg_bot.verify_flow
 from util.DB import DB
-
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 async def removeclass(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

@@ -31,35 +31,35 @@ class DB:
             )
 
     @classmethod
-    def add_user(cls, user_id: int) -> None:
+    def add_user(cls, user_id: int, platform: str = 'tg') -> None:
         with cls.conn as transaction:
-            transaction.execute('insert or ignore into user (uid) values (?)', (user_id,))
+            transaction.execute('insert or ignore into user (uid, platform) values (?, ?)', (user_id, platform))
 
     @classmethod
-    def get_user(cls, user_id: int) -> tuple[Optional[str], bool]:
-        cur: sqlite3.Cursor = cls.conn.execute('select gid, trusted from user where uid = ?', (user_id,))
+    def get_user(cls, user_id: int, platform: str = 'tg') -> tuple[Optional[str], bool]:
+        cur: sqlite3.Cursor = cls.conn.execute('select gid, trusted from user where uid = ? and platform = ?', (user_id, platform))
         result = cur.fetchone()
         return result[0], bool(result[1])
 
     @classmethod
-    def trust_user(cls, user_id: int) -> None:
+    def trust_user(cls, user_id: int, platform: str = 'tg') -> None:
         with cls.conn as transaction:
-            transaction.execute('update user set trusted = 1 where uid = ?', (user_id,))
+            transaction.execute('update user set trusted = 1 where uid = ? and platform = ?', (user_id, platform))
 
     @classmethod
-    def is_trusted_user(cls, user_id: int) -> bool:
-        cur: sqlite3.Cursor = cls.conn.execute('select 1 from user where uid = ? and trusted = 1', (user_id,))
+    def is_trusted_user(cls, user_id: int, platform: str = 'tg') -> bool:
+        cur: sqlite3.Cursor = cls.conn.execute('select 1 from user where uid = ? and trusted = 1 and platform = ?', (user_id, platform))
         return bool(cur.fetchone())
 
     @classmethod
-    def user_exists(cls, user_id: int) -> bool:
-        cur: sqlite3.Cursor = cls.conn.execute('select 1 from user where uid = ?', (user_id,))
+    def user_exists(cls, user_id: int, platform: str = 'tg') -> bool:
+        cur: sqlite3.Cursor = cls.conn.execute('select 1 from user where uid = ? and platform = ?', (user_id, platform))
         return bool(cur.fetchone())
 
     @classmethod
-    def delete_user(cls, user_id: int) -> None:
+    def delete_user(cls, user_id: int, platform: str = 'tg') -> None:
         with cls.conn as transaction:
-            transaction.execute('delete from user where uid = ?', (user_id,))
+            transaction.execute('delete from user where uid = ? and platform = ?', (user_id, platform))
 
     @classmethod
     def get_areas(cls) -> list[str]:
@@ -81,43 +81,39 @@ class DB:
         return bool(cur.fetchone())
 
     @classmethod
-    def add_user_to_class(cls, user_id: int, class_id: str) -> None:
+    def add_user_to_class(cls, user_id: int, class_id: str, platform: str = 'tg') -> None:
         with cls.conn as transaction:
-            transaction.execute('update user set gid = ? where uid = ?', (class_id, user_id))
+            transaction.execute('update user set gid = ? where uid = ? and platform = ?', (class_id, user_id, platform))
 
     @classmethod
-    def clear_user_class(cls, user_id: int) -> None:
+    def clear_user_class(cls, user_id: int, platform: str = 'tg') -> None:
         with cls.conn as transaction:
-            transaction.execute('update user set gid = null where uid = ?', (user_id,))
+            transaction.execute('update user set gid = null where uid = ? and platform = ?', (user_id, platform))
 
     @classmethod
-    def get_all_substitutions_for_user(cls, uid: int) -> list[Substitution]:
+    def get_all_substitutions_for_user(cls, uid: int, platform: str = 'tg') -> list[Substitution]:
         cur: sqlite3.Cursor = cls.conn.execute(
             "select gid, day, lesson, teacher, subject, room, notes, area, u.last_update < s.last_update from user u"
-            " join substitution s using (gid) join class using (gid) where uid = ? and "
+            " join substitution s using (gid) join class using (gid) where uid = ? and platform = ? and "
             "day > strftime('%s', 'now') - 86200 order by day, lesson asc",
-            (uid,)
+            (uid, platform)
         )
         return [Substitution(*row) for row in cur.fetchall()]
 
     @classmethod
-    def get_all_updated_users(cls) -> list[int]:
+    def get_all_updated_users(cls, platform: str = 'tg') -> list[int]:
         cur: sqlite3.Cursor = cls.conn.execute(
             "select distinct uid from user u join substitution s using (gid) "
-            "where s.last_update > u.last_update and day > strftime('%s', 'now') - 86200"
+            "where platform = ? and s.last_update > u.last_update and day > strftime('%s', 'now') - 86200",
+            (platform,)
         )
         return [i[0] for i in cur.fetchall()]
 
     @classmethod
-    def update_user(cls, user_id: int, is_zero: bool = False) -> None:
+    def update_user(cls, user_id: int, platform: str = 'tg', is_zero: bool = False) -> None:
         with cls.conn as transaction:
             target: int = 0 if is_zero else time.time()
-            transaction.execute("update user set last_update = ? where uid = ?", (target, user_id))
-
-    @classmethod
-    def get_all_users_in_class(cls, gid: str) -> list[int]:
-        cur: sqlite3.Cursor = cls.conn.execute('select uid from user where gid = ?', (gid,))
-        return [i[0] for i in cur.fetchall()]
+            transaction.execute("update user set last_update = ? where uid = ? and platform = ?", (target, user_id, platform))
 
     @classmethod
     def add_class_if_not_exists(cls, gid: str, area: str) -> None:

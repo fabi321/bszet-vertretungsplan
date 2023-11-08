@@ -1,17 +1,10 @@
-import requests
 from telegram import Update
 from telegram.ext import ConversationHandler, ContextTypes, CommandHandler, MessageHandler, filters
 
+from util import check_credentials
 from util.DB import DB
 
 ENTER_USERNAME, ENTER_PASSWORD = range(2)
-
-
-def check_credentials(username: str, password: str) -> bool:
-    if len(username) > 20 or len(password) > 20:
-        return False
-    r: requests.Response = requests.get('https://geschuetzt.bszet.de', auth=(username, password))
-    return r.status_code == 200
 
 
 async def verify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -31,7 +24,6 @@ async def entered_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     del context.user_data['username']
     is_valid: bool = check_credentials(username, password)
     if is_valid:
-        DB.add_new_credential(username, password)
         DB.trust_user(update.effective_user.id)
         await update.message.reply_text(
             'Du wurdest erfolgreich verifiziert. Die Klasse kannst du mit /set_class setzen'

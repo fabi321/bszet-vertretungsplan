@@ -66,7 +66,7 @@ async def class_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text('Leider wurde die Klasse nicht gefunden', reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
     DB.add_user_to_class(update.effective_user.id, class_name)
-    DB.update_user(update.effective_user.id, True)
+    DB.update_user(update.effective_user.id, is_zero=True)
     await update.message.reply_text(
         f'Du hast erfolgreich die Klasse {class_name} ausgewählt.', reply_markup=ReplyKeyboardRemove()
     )

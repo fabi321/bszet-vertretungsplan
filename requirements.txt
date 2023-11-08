@@ -1,5 +1,6 @@
-python-telegram-bot[ext,job-queue]
+python-telegram-bot[ext,job-queue]==20.6
 PyPDF2
-requests
+requests==2.31.0
 python-dotenv
 beautifulsoup4
+discord.py

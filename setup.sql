@@ -14,6 +14,7 @@ create table if not exists class (
 
 create table if not exists user (
     uid int primary key,
+    platform text not null default 'tg',
     gid text references class on delete cascade,
     trusted int not null default 0,
     last_update int not null default (strftime('%s', 'now'))
