@@ -44,10 +44,10 @@ async def verify(interaction: discord.Interaction, username: str, password: str)
         await interaction.response.sent_message("Ungültige Zugangsdaten")
 
 
-@tree.command(description="Setze eine Klasse, fur die Vertretungen gesendet werden sollen")
+@tree.command(description="Setze eine Klasse, für die Vertretungen gesendet werden sollen")
 @app_commands.choices(
     area=[
-        app_commands.Choice(name="Berufschule fir Informationstechnik", value="bs-it"),
+        app_commands.Choice(name="Berufschule für Informationstechnik", value="bs-it"),
         app_commands.Choice(name="Berufsschule für Elektrotechnik", value="bs-et"),
         app_commands.Choice(name="Berufliches Gymnasium", value="bgy"),
     ]
